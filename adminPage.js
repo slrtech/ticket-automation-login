@@ -1,34 +1,41 @@
 let cronDisplayDescription = ''; // Human-readable cron description
 let cronExpression = [];        // Raw cron expression
 
-const urlParams = new URLSearchParams(window.location.search);
-const originalURL = urlParams.get('originalURL');
-// console.log("Original URL:", originalURL);
-if (!originalURL) {
-  showAlert({
-    icon: "error",
-    title: "Error...",
-    text: "Parâmetro originalURL não encontrado na URL. Verifique com o administrador."
-  });
-}
+// const urlParams = new URLSearchParams(window.location.search);
+// const org_id = urlParams.get('org_id');
+// // console.log("Original URL:", org_id);
+// if (!org_id) {
+//   showAlert({
+//     icon: "error",
+//     title: "Error...",
+//     text: "Parâmetro org_id não encontrado na URL. Verifique com o administrador."
+//   });
+// }
 
 // Load environment variables
-const API_URL = window.API_URL || "";
+const API_DB = window.API_DB || "";
 const API_TOKEN = window.API_TOKEN || "";
 
 // Function to redirect to another HTML file
 function redirectToLogin() {
-  window.location.href = `index.html?originalURL=${originalURL}`; // Replace with the actual HTML file name
+  window.location.href = `index.html?org_id=${org_id}&org_token_id=${org_token_id}`; // Replace with the actual HTML file name
 }
 // Fetch automation data from API and populate the table
 function fetchAutomations() {
   // Show the loading indicator
   document.getElementById("loading_general").style.display = "flex";
 
-  fetch(API_URL + '/messageDistribution/list', {
-    headers: {
-      'Message-Distribution-Token': API_TOKEN,
-    },
+  let headers = new Headers();
+  headers.append("Content-Type", "application/json");
+  headers.append("Message-Distribution-Token", API_TOKEN);
+
+  fetch(API_DB + '/messageDistribution/list', {
+    method: 'POST',
+    body: JSON.stringify({
+      org_id: window.org_id,
+      org_token_id: window.org_token_id
+    }),
+    headers: headers
   })
     .then(response => response.json())
     .then(data => {
@@ -326,13 +333,18 @@ function toggleStatus(button, automationId) {
 
 // Activate automation
 function activateAutomation(automationId) {
-  fetch(API_URL + '/messageDistribution/activate', {
+  let headers = new Headers();
+  headers.append("Content-Type", "application/json");
+  headers.append("Message-Distribution-Token", API_TOKEN);
+
+  fetch(API_DB + '/messageDistribution/activate', {
     method: 'POST',
-    headers: {
-      'Message-Distribution-Token': API_TOKEN,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ id: automationId })
+    headers: headers,
+    body: JSON.stringify({
+      id: automationId,
+      org_id: window.org_id,
+      org_token_id: window.org_token_id
+    })
   })
     .then(response => response.json())
     .then(data => {
@@ -344,13 +356,18 @@ function activateAutomation(automationId) {
 
 // Deactivate automation
 function deactivateAutomation(automationId) {
-  fetch(API_URL + '/messageDistribution/deactivate', {
+  let headers = new Headers();
+  headers.append("Content-Type", "application/json");
+  headers.append("Message-Distribution-Token", API_TOKEN);
+
+  fetch(API_DB + '/messageDistribution/deactivate', {
     method: 'POST',
-    headers: {
-      'Message-Distribution-Token': API_TOKEN,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ id: automationId })
+    headers: headers,
+    body: JSON.stringify({
+      id: automationId,
+      org_id: window.org_id,
+      org_token_id: window.org_token_id
+    })
   })
     .then(response => response.json())
     .then(data => {
@@ -385,13 +402,19 @@ function confirmDelete(automationId, automationName) {
 
 // Delete automation
 function deleteAutomation(automationId, automationName) {
-  fetch(API_URL + '/messageDistribution/delete', {
+  let headers = new Headers();
+  headers.append("Content-Type", "application/json");
+  headers.append("Message-Distribution-Token", API_TOKEN);
+
+  fetch(API_DB + '/messageDistribution/delete', {
     method: 'POST',
-    headers: {
-      'Message-Distribution-Token': API_TOKEN,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ id: automationId, name: automationName })
+    headers: headers,
+    body: JSON.stringify({
+      id: automationId,
+      name: automationName,
+      org_id: window.org_id,
+      org_token_id: window.org_token_id
+    })
   })
     .then(response => response.json())
     .then(data => {
@@ -759,7 +782,7 @@ function generateCron() {
 
 // Function to fetch departments
 function fetchDepartments(dropdownId, selectedValue = '') {
-  fetch(API_URL + '/messageDistribution/departments', {
+  fetch(API_DB + '/messageDistribution/departments', {
     method: 'GET',
     headers: {
       'Message-Distribution-Token': API_TOKEN,
@@ -799,7 +822,7 @@ function populateDepartmentDropdown(departments, dropdownId = 'departmentDropdow
 
 // Function to fetch departments
 function fetchRoles(dropdownId, selectedValue = '') {
-  fetch(API_URL + '/messageDistribution/roles', {
+  fetch(API_DB + '/messageDistribution/roles', {
     method: 'GET',
     headers: {
       'Message-Distribution-Token': API_TOKEN,
@@ -1049,7 +1072,7 @@ function saveAutomation() {
   };
 
   // API Request
-  fetch(API_URL + '/messageDistribution/create', {
+  fetch(API_DB + '/messageDistribution/create', {
     method: 'POST',
     headers: {
       'Message-Distribution-Token': API_TOKEN,
@@ -1313,7 +1336,7 @@ function updateAutomation() {
   };
 
   // API Request
-  fetch(API_URL + '/messageDistribution/update', {
+  fetch(API_DB + '/messageDistribution/update', {
     method: 'PUT', // Update requires PUT
     headers: {
       'Message-Distribution-Token': API_TOKEN,

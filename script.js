@@ -1,84 +1,88 @@
-let loggedInUser;
+let API_TOKEN;
+let API_URL;
+let API_DB = window.API_DB || "";
 
-//expects this:
-//http://127.0.0.1:3000/index.html?originalURL=condfy.digisac.app
+// ✅ Listen for the "configLoaded" event before accessing API_TOKEN
+document.addEventListener("configLoaded", function () {
+    API_TOKEN = window.API_TOKEN || "";
+    API_URL = window.API_URL || "";
 
-const urlParams = new URLSearchParams(window.location.search);
-const originalURL = urlParams.get('originalURL');
-// console.log("Original URL:", originalURL);
-if (!originalURL) {
-    showAlert({
-        icon: "error",
-        title: "Error...",
-        text: "Parâmetro originalURL não encontrado na URL. Verifique com o administrador."
-    });
-}
+    console.log("API Config Loaded:");
+    console.log("API_TOKEN:", API_TOKEN);
+    console.log("API_URL:", API_URL);
 
+    if (!API_TOKEN || !API_URL) {
+        console.error("API_TOKEN or API_URL is missing. Check config.js.");
+    }
+});
 
-
-// Load environment variables
-const API_URL = window.API_URL || "";
-const API_TOKEN = window.API_TOKEN || "";
-
+// You can now safely use API_URL and API_TOKEN in functions called after initialization
 function loginAndActivate() {
     document.getElementById("loading").style.display = "flex";
     let email = document.getElementById("email").value,
         password = document.getElementById("password").value;
 
-    // Store credentials in sessionStorage after successful login
-    // const credentials = { email, password };
-
     let headers = new Headers();
     headers.append("Content-Type", "application/json");
+    headers.append("Message-Distribution-Token", API_TOKEN);
+
     let requestBody = JSON.stringify({
         email: email,
         password: password,
-        urlApi: `https://${originalURL}/api/v1/`
+        urlApi: `https://${API_URL}/api/v1/`,
+        org_id: window.org_id,
+        org_token_id: window.org_token_id
     });
 
-    fetch(API_URL + "/getUser3", {
+    fetch(API_DB + "/getUser3", {
         method: "POST",
         headers: headers,
         body: requestBody,
         redirect: "follow"
     }).then(response => {
         if (!response.ok) throw Error(`HTTP error! Status: ${response.status}`);
-        document.getElementById("loading").style.display = "none";
         return response.json();
     }).then(data => {
+        // Log the response to understand its structure
+        // console.log("API Response:", data);
+
+        // // Store the entire response
         loggedInUser = data;
-        // Fetch automations first
-        fetch(API_URL + "/messageDistribution/list", {
-            headers: {
-                'Message-Distribution-Token': API_TOKEN,
-            },
-        })
-            .then(response => response.json())
-            .then(automations => {
-                // Now call displayRoles with both roles and automations
-                displayRoles(data.roles, automations);
 
-                // Hide login elements and show activation buttons
-                document.getElementById("login").style.display = "none";
-                document.getElementById("activationButtons").style.display = "block";
-                document.getElementById("email").style.display = "none";
-                document.getElementById("password").style.display = "none";
+        // console.log("loggedInUser:", loggedInUser);
 
-                // Add logged-in class to adjust spacing
-                document.querySelector('.login-wrapper').classList.add('logged-in');
+        // Check if the expected structure exists
+        if (!loggedInUser || !loggedInUser.user || !loggedInUser.automations) {
+            throw new Error("Unexpected response format from API");
+        }
 
-                // Hide the title text after login
-                document.getElementById('pageTitle').style.display = "none";
+        // Extract user roles and automations from the new response structure
+        const userRoles = loggedInUser.user.roles;
+        const automations = loggedInUser.automations.data[0].automations;
 
-                if (data.isAdmin) {
-                    document.getElementById("adminDashboardButton").style.display = "block";
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching automations:', error);
-            });
+        // Display roles with automations data
+        displayRoles(userRoles, automations);
+
+        // Hide login elements and show activation buttons
+        document.getElementById("login").style.display = "none";
+        document.getElementById("activationButtons").style.display = "block";
+        document.getElementById("email").style.display = "none";
+        document.getElementById("password").style.display = "none";
+
+        // Add logged-in class to adjust spacing
+        document.querySelector('.login-wrapper').classList.add('logged-in');
+
+        // Hide the title text after login
+        document.getElementById('pageTitle').style.display = "none";
+
+        if (loggedInUser.user.isAdmin) {
+            document.getElementById("adminDashboardButton").style.display = "block";
+        }
+
+        // Only hide loading indicator after everything is complete
+        document.getElementById("loading").style.display = "none";
     }).catch(error => {
-        console.error("Error:", error.message);
+        console.error('Error');
         document.getElementById("loading").style.display = "none";
         showAlert({
             icon: "error",
@@ -90,7 +94,7 @@ function loginAndActivate() {
 
 function redirectToAdminDashboard() {
     // window.location.href = `${window.location.origin}/tickets-automation/adminPage.html`;
-    window.location.href = `${window.location.origin}/adminPage.html?originalURL=${originalURL}`;
+    window.location.href = `${window.location.origin}/adminPage.html?org_id=${org_id}&org_token_id=${org_token_id}`;
 }
 
 function displayRoles(roles, automationsResponse) {
@@ -99,6 +103,7 @@ function displayRoles(roles, automationsResponse) {
     const selector2 = document.getElementById('selector2'); // Activation selector
 
     // console.log("Roles from API response:", roles);
+    // console.log("automationsResponse:", automationsResponse);
 
     t.style.display = "block";
 
@@ -107,7 +112,9 @@ function displayRoles(roles, automationsResponse) {
     selector2.innerHTML = '';
 
     // Extract automations from the new response structure
-    const automations = automationsResponse?.[0]?.automations || [];
+    const automations = automationsResponse || [];
+
+    // console.log("automations:", automations);
 
     if (roles && roles.length > 0) {
         t.innerHTML = `
@@ -261,22 +268,34 @@ function confirmDeactivationWithReason(reason) {
     // Show loading spinner
     document.getElementById("loading").style.display = "flex";
 
+    // Check if loggedInUser has the expected structure
+    if (!loggedInUser || !loggedInUser.user) {
+        document.getElementById("loading").style.display = "none";
+        console.error("Invalid loggedInUser structure:", loggedInUser);
+        showAlert({
+            icon: "error",
+            title: "Erro...",
+            text: "Sessão inválida. Por favor, faça login novamente."
+        });
+        return;
+    }
+
     const requestBody = JSON.stringify({
-        user: loggedInUser,
+        user: loggedInUser.user,
         reason: reason,
-        roleId: selectedRoleId,  // Use roleId instead of automationId
+        roleId: selectedRoleId,
         departmentName: departmentName
     });
 
-    fetch(API_URL + "/deactivateUser3", {
+    fetch(API_DB + "/deactivateUser3", {
         method: "POST",
         headers: headers,
         body: requestBody,
     })
-        .then(response => response.json()) // Parse response JSON first
+        .then(response => response.json())
         .then(data => {
-            document.getElementById("loading").style.display = "none";
             if (data.error === 403) {
+                document.getElementById("loading").style.display = "none";
                 if (data.error_code === "ROLE_ARRAY_LENGHT_ONE") {
                     showAlert({
                         title: "Usuário possui apenas um cargo",
@@ -294,6 +313,7 @@ function confirmDeactivationWithReason(reason) {
                 return; // Prevent further execution
             };
             if (data.error === 404) {
+                document.getElementById("loading").style.display = "none";
                 if (data.error_code === "ROLE_NOT_FOUND") {
                     showAlert({
                         title: "Cargo não encontrado",
@@ -311,6 +331,7 @@ function confirmDeactivationWithReason(reason) {
                 return; // Prevent further execution
             };
             if (data.error === 400) {
+                document.getElementById("loading").style.display = "none";
                 if (data.error_code === "AUTOMATION_ALREADY_DEACTIVATED") {
                     showAlert({
                         title: "Cargo já está desativado",
@@ -327,14 +348,16 @@ function confirmDeactivationWithReason(reason) {
 
                 return; // Prevent further execution
             }
+
+            // Keep loading visible while refreshing UI
             loginAndActivate(); // Refresh UI
-            document.getElementById("loading").style.display = "none";
             closeModal("deactivateModal");
             showAlert({
                 title: "Desativação bem-sucedida!",
                 text: data.status,
                 icon: "success",
             });
+            // Note: loading will be hidden by loginAndActivate when it completes
         })
         .catch(error => {
             document.getElementById("loading").style.display = "none";
@@ -360,23 +383,35 @@ function confirmActivation() {
     // Show loading spinner
     document.getElementById("loading").style.display = "flex";
 
+    // Check if loggedInUser has the expected structure
+    if (!loggedInUser || !loggedInUser.user) {
+        document.getElementById("loading").style.display = "none";
+        console.error("Invalid loggedInUser structure:", loggedInUser);
+        showAlert({
+            icon: "error",
+            title: "Erro...",
+            text: "Sessão inválida. Por favor, faça login novamente."
+        });
+        return;
+    }
+
     let t = JSON.stringify({
-        user: loggedInUser,
+        user: loggedInUser.user,
         roleId: roleId,
         departmentName: departmentName,
         departmentId: departmentId
     });
 
-    fetch(API_URL + "/activateUser3", {
+    fetch(API_DB + "/activateUser3", {
         method: "POST",
         headers: e,
         body: t,
         redirect: "follow"
     })
-        .then(response => response.json()) // Parse response JSON first
+        .then(response => response.json())
         .then(data => {
-            document.getElementById("loading").style.display = "none";
             if (data.error === 403) {
+                document.getElementById("loading").style.display = "none";
                 if (data.error_code === "USER_MISSING_DEPARTMENT") {
                     showAlert({
                         title: "Departamento não configurado",
@@ -394,6 +429,7 @@ function confirmActivation() {
                 return; // Prevent further execution
             };
             if (data.error === 404) {
+                document.getElementById("loading").style.display = "none";
                 if (data.error_code === "ROLE_NOT_FOUND") {
                     showAlert({
                         title: "Cargo não encontrado",
@@ -411,6 +447,7 @@ function confirmActivation() {
                 return; // Prevent further execution
             };
             if (data.error === 400) {
+                document.getElementById("loading").style.display = "none";
                 if (data.error_code === "AUTOMATION_ALREADY_ACTIVE") {
                     showAlert({
                         title: "Cargo já está ativo",
@@ -427,15 +464,16 @@ function confirmActivation() {
 
                 return; // Prevent further execution
             }
-            // If no error, proceed with success logic
+
+            // Keep loading visible while refreshing UI
             loginAndActivate(); // Refresh UI
-            document.getElementById("loading").style.display = "none";
             closeModal("departmentModal");
             showAlert({
                 title: "Ativação bem-sucedida!",
                 text: data.status,
                 icon: "success"
             });
+            // Note: loading will be hidden by loginAndActivate when it completes
         })
         .catch(error => {
             console.error("Error:", error.message);
