@@ -168,6 +168,10 @@ h2 {
 }
 
 #rolesList .spinner {
+  border: 4.40px solid #f3f3f3;  /* Increased from 7px */
+  border-top: 4.40px solid #339989;  /* Green spinning part */
+  width: 18px;
+  height: 18px;
   margin: 1rem auto;
 }
 
