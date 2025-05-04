@@ -1,5 +1,5 @@
 // Configuration for the application
-window.API_DB = "https://primary-production-4558.up.railway.app/webhook";  // Replace with your actual API URL
+window.API_DB = "https://primary-production-a876.up.railway.app/webhook";  // Replace with your actual API URL
 
 function showAlert(options) {
   return Swal.fire({
@@ -52,19 +52,16 @@ window.org_token_id = checkOrgTokenIdParameter();
 
 async function initializeConfig(callback) {
   document.getElementById("loading").style.display = "flex";
-  let requestBody = JSON.stringify({
-    org_id: window.org_id,
-    org_token_id: window.org_token_id
-  });
   let headers = new Headers();
   headers.append("Content-Type", "application/json");
+  headers.append("org_id", window.org_id);
+  headers.append("org_token_id", window.org_token_id);
 
   try {
     // Fetch credentials from database
     const response = await fetch(window.API_DB + "/credentials", {
       method: "POST",
-      headers: headers,
-      body: requestBody
+      headers: headers
     });
 
     if (!response.ok) {

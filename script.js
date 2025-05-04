@@ -17,21 +17,24 @@ document.addEventListener("configLoaded", function () {
 });
 
 // You can now safely use API_URL and API_TOKEN in functions called after initialization
-function loginAndActivate() {
-    document.getElementById("loading").style.display = "flex";
+function loginAndActivate(loading = true) {
+    const loader = document.getElementById("loading");
+    if (loader) {
+        loader.style.display = loading ? "flex" : "none";
+    }
     let email = document.getElementById("email").value,
         password = document.getElementById("password").value;
 
     let headers = new Headers();
     headers.append("Content-Type", "application/json");
     headers.append("Message-Distribution-Token", API_TOKEN);
+    headers.append("org_id", window.org_id);
+    headers.append("org_token_id", window.org_token_id);
 
     let requestBody = JSON.stringify({
         email: email,
         password: password,
-        urlApi: `https://${API_URL}/api/v1/`,
-        org_id: window.org_id,
-        org_token_id: window.org_token_id
+        urlApi: `https://${API_URL}/api/v1/`
     });
 
     fetch(API_DB + "/getUser3", {
@@ -82,7 +85,7 @@ function loginAndActivate() {
         // Only hide loading indicator after everything is complete
         document.getElementById("loading").style.display = "none";
     }).catch(error => {
-        console.error('Error');
+        console.error("Caught error:", error);
         document.getElementById("loading").style.display = "none";
         showAlert({
             icon: "error",
@@ -350,7 +353,7 @@ function confirmDeactivationWithReason(reason) {
             }
 
             // Keep loading visible while refreshing UI
-            loginAndActivate(); // Refresh UI
+            loginAndActivate(false); // Refresh UI
             closeModal("deactivateModal");
             showAlert({
                 title: "Desativação bem-sucedida!",
@@ -466,7 +469,7 @@ function confirmActivation() {
             }
 
             // Keep loading visible while refreshing UI
-            loginAndActivate(); // Refresh UI
+            loginAndActivate(false); // Refresh UI
             closeModal("departmentModal");
             showAlert({
                 title: "Ativação bem-sucedida!",
@@ -556,3 +559,5 @@ function showAlert(options) {
 
 const loadingElement = document.getElementById("loading");
 loadingElement.style.display = "none";
+const loadingElementWorkflows = document.getElementById("loading_workflows");
+loadingElementWorkflows.style.display = "none";
