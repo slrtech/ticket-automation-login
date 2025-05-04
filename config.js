@@ -1,5 +1,7 @@
 // Configuration for the application
-window.API_DB = "https://primary-production-a876.up.railway.app/webhook";  // Replace with your actual API URL
+// window.API_DB = "https://primary-production-a876.up.railway.app/webhook";
+// Replace with your actual API URL
+window.API_DB = "http://137.131.142.36:5678/webhook";
 
 function showAlert(options) {
   return Swal.fire({
@@ -82,7 +84,7 @@ async function initializeConfig(callback) {
     }
 
     // ✅ Set global variables
-    window.API_URL = data.urlAPI;
+    window.API_URL = data.apiUrl;
     window.API_TOKEN = data.token;
 
     // ✅ Dispatch an event so script.js knows the config is ready
