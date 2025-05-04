@@ -26,7 +26,10 @@ function checkOrgIdParameter() {
     showAlert({
       icon: "error",
       title: "Error...",
-      text: "Parâmetro org_id não encontrado na URL. Verifique com o administrador."
+      text: "Parâmetro org_id não encontrado na URL. Verifique com o administrador.",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false
     });
     return null;
   }
@@ -41,7 +44,10 @@ function checkOrgTokenIdParameter() {
     showAlert({
       icon: "error",
       title: "Error...",
-      text: "Parâmetro org_token_id não encontrado na URL. Verifique com o administrador."
+      text: "Parâmetro org_token_id não encontrado na URL. Verifique com o administrador.",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false
     });
     return null;
   }
@@ -52,60 +58,70 @@ function checkOrgTokenIdParameter() {
 window.org_id = checkOrgIdParameter();
 window.org_token_id = checkOrgTokenIdParameter();
 
-async function initializeConfig(callback) {
-  document.getElementById("loading").style.display = "flex";
-  let headers = new Headers();
-  headers.append("Content-Type", "application/json");
-  headers.append("org_id", window.org_id);
-  headers.append("org_token_id", window.org_token_id);
+if (org_id == null || org_token_id == null) { } else {
+  async function initializeConfig(callback) {
+    // document.getElementById("loading").style.display = "flex";
+    let headers = new Headers();
+    headers.append("Content-Type", "application/json");
+    headers.append("org_id", window.org_id);
+    headers.append("org_token_id", window.org_token_id);
 
-  try {
-    // Fetch credentials from database
-    const response = await fetch(window.API_DB + "/credentials", {
-      method: "POST",
-      headers: headers
-    });
+    try {
+      // Fetch credentials from database
+      const response = await fetch(window.API_DB + "/credentials", {
+        method: "POST",
+        headers: headers
+      });
 
-    if (!response.ok) {
-      throw new Error("Erro ao buscar credenciais.");
-    }
+      if (!response.ok) {
+        throw new Error("Erro ao buscar credenciais.");
+      }
 
-    const data = await response.json();
-    document.getElementById("loading").style.display = "none";
+      const data = await response.json();
+      document.getElementById("loading").style.display = "none";
 
-    if (data.error === 401) {
+      if (data.error === 401) {
+        document.getElementById("login").disabled = true;
+        showAlert({
+          title: "Erro de Validação",
+          text: data.status,
+          icon: "error",
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false
+        });
+        return;
+      }
+
+      // ✅ Set global variables
+      window.API_URL = data.apiUrl;
+      window.API_TOKEN = data.token;
+
+      // ✅ Dispatch an event so script.js knows the config is ready
+      document.dispatchEvent(new Event("configLoaded"));
+
+      // ✅ Call the provided callback function (if exists)
+      if (callback) {
+        document.getElementById("login").disabled = false;
+        document.getElementById("login").style.cursor = "pointer";
+        callback()
+      };
+
+    } catch (error) {
+      console.error('Failed to initialize configuration:', error.message || error);
       document.getElementById("login").disabled = true;
+      document.getElementById("loading").style.display = "none";
       showAlert({
-        title: "Erro de Validação",
-        text: data.status,
+        title: "Erro de Conexão",
+        text: "Falha ao carregar a configuração crítica. Verifique sua conexão e tente novamente.",
         icon: "error"
       });
-      return;
     }
-
-    // ✅ Set global variables
-    window.API_URL = data.apiUrl;
-    window.API_TOKEN = data.token;
-
-    // ✅ Dispatch an event so script.js knows the config is ready
-    document.dispatchEvent(new Event("configLoaded"));
-
-    // ✅ Call the provided callback function (if exists)
-    if (callback) callback();
-
-  } catch (error) {
-    console.error('Failed to initialize configuration:', error.message || error);
-    document.getElementById("login").disabled = true;
-    document.getElementById("loading").style.display = "none";
-    showAlert({
-      title: "Erro de Conexão",
-      text: "Falha ao carregar a configuração crítica. Verifique sua conexão e tente novamente.",
-      icon: "error"
-    });
   }
+
+  // Call the initialization function when the script loads
+  initializeConfig(() => {
+    console.log("Config initialized successfully.");
+  });
 }
 
-// Call the initialization function when the script loads
-initializeConfig(() => {
-  console.log("Config initialized successfully.");
-});

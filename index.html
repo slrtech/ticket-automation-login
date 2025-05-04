@@ -17,10 +17,6 @@
     <div class="spinner"></div>
     <p>Carregando...</p>
   </div>
-  <div id="loading_workflows" class="loading-workflows">
-    <div class="spinner"></div>
-    <p>Carregando...</p>
-  </div>
 
   <div>
     <div class="container">
@@ -35,7 +31,8 @@
         <form id="loginForm" class="form">
           <input type="email" id="email" placeholder="Email do usuário" required />
           <input type="password" id="password" placeholder="Senha do usuário" required />
-          <button class="btn-primary" type="button" id="login" onclick="loginAndActivate()">
+          <button class="btn-primary" disabled style="cursor: not-allowed;" type="button" id="login"
+            onclick="loginAndActivate()">
             Login
           </button>
         </form>
