@@ -18,82 +18,88 @@ document.addEventListener("configLoaded", function () {
 
 // You can now safely use API_URL and API_TOKEN in functions called after initialization
 function loginAndActivate(loading = true) {
-    const loader = document.getElementById("loading");
-    if (loader) {
-        loader.style.display = loading ? "flex" : "none";
+    // loader geral (se usado)
+    const globalLoader = document.getElementById("loading");
+    if (globalLoader) {
+        globalLoader.style.display = loading ? "flex" : "none";
     }
-    let email = document.getElementById("email").value,
-        password = document.getElementById("password").value;
 
-    let headers = new Headers();
+    // container de roles
+    const rolesList = document.getElementById("rolesList");
+    // 1) mostra o spinner dentro de rolesList
+    if (rolesList) {
+        rolesList.innerHTML = `<div class="spinner"></div>`;
+    }
+
+    const email    = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const headers = new Headers();
     headers.append("Content-Type", "application/json");
     headers.append("Message-Distribution-Token", API_TOKEN);
     headers.append("org_id", window.org_id);
     headers.append("org_token_id", window.org_token_id);
 
-    let requestBody = JSON.stringify({
-        email: email,
-        password: password,
+    const requestBody = JSON.stringify({
+        email,
+        password,
         urlApi: `https://${API_URL}/api/v1/`
     });
 
     fetch(API_DB + "/getUser3", {
-        method: "POST",
+        method:  "POST",
         headers: headers,
-        body: requestBody,
-        redirect: "follow"
-    }).then(response => {
-        if (!response.ok) throw Error(`HTTP error! Status: ${response.status}`);
-        return response.json();
-    }).then(data => {
-        // Log the response to understand its structure
-        // console.log("API Response:", data);
-
-        // // Store the entire response
+        body:    requestBody,
+        redirect:"follow"
+    })
+    .then(res => {
+        if (!res.ok) throw new Error(`HTTP status ${res.status}`);
+        return res.json();
+    })
+    .then(data => {
         loggedInUser = data;
-
-        // console.log("loggedInUser:", loggedInUser);
-
-        // Check if the expected structure exists
-        if (!loggedInUser || !loggedInUser.user || !loggedInUser.automations) {
-            throw new Error("Unexpected response format from API");
+        if (!data.user || !data.automations) {
+            throw new Error("Formato de resposta inesperado");
         }
 
-        // Extract user roles and automations from the new response structure
-        const userRoles = loggedInUser.user.roles;
-        const automations = loggedInUser.automations.data[0].automations;
+        const userRoles   = data.user.roles;
+        const automations = data.automations.data[0].automations;
 
-        // Display roles with automations data
+        // displayRoles vai limpar e preencher rolesList
         displayRoles(userRoles, automations);
 
-        // Hide login elements and show activation buttons
-        document.getElementById("login").style.display = "none";
-        document.getElementById("activationButtons").style.display = "block";
-        document.getElementById("email").style.display = "none";
-        document.getElementById("password").style.display = "none";
-
-        // Add logged-in class to adjust spacing
-        document.querySelector('.login-wrapper').classList.add('logged-in');
-
-        // Hide the title text after login
-        document.getElementById('pageTitle').style.display = "none";
-
-        if (loggedInUser.user.isAdmin) {
+        // ajustes de UI pós-login
+        document.getElementById("login")             .style.display = "none";
+        document.getElementById("activationButtons") .style.display = "block";
+        document.getElementById("email")             .style.display = "none";
+        document.getElementById("password")          .style.display = "none";
+        document.querySelector('.login-wrapper')     .classList.add('logged-in');
+        document.getElementById('pageTitle')         .style.display = "none";
+        if (data.user.isAdmin) {
             document.getElementById("adminDashboardButton").style.display = "block";
         }
-
-        // Only hide loading indicator after everything is complete
-        document.getElementById("loading").style.display = "none";
-    }).catch(error => {
-        console.error("Caught error:", error);
-        document.getElementById("loading").style.display = "none";
+    })
+    .catch(err => {
+        // em caso de erro, limpa o spinner
+        if (rolesList) {
+            rolesList.innerHTML = "";
+        }
+        console.error(err);
         showAlert({
             icon: "error",
-            title: "Error...",
-            text: "Senha incorreta, ou erro do servidor. Tente novamente."
+            title: "Erro...",
+            text:  "Senha incorreta ou erro no servidor."
         });
+    })
+    .finally(() => {
+        // esconde loader geral, se houver
+        if (globalLoader) {
+            globalLoader.style.display = "none";
+        }
     });
 }
+
+
 
 function redirectToAdminDashboard() {
     // window.location.href = `${window.location.origin}/tickets-automation/adminPage.html`;
