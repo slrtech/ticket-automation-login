@@ -49,7 +49,7 @@ function loginAndActivate(loading = true) {
     const requestBody = JSON.stringify({
         email,
         password,
-        urlApi: `https://${API_URL}/api/v1/`
+        apiUrl: `https://${API_URL}/api/v1/`
     });
 
     fetch(API_DB + "/getUser3", {
