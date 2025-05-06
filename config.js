@@ -3,6 +3,13 @@
 // Replace with your actual API URL
 window.API_DB = "http://137.131.142.36:5678/webhook";
 
+window.onload = function () {
+  const loadingConfig = document.getElementById("loading");
+  if (loadingConfig) {
+    loadingConfig.style.display = "flex";
+  }
+}
+
 function showAlert(options) {
   return Swal.fire({
     // position: 'center',
@@ -57,6 +64,8 @@ function checkOrgTokenIdParameter() {
 // Make org_id globally available
 window.org_id = checkOrgIdParameter();
 window.org_token_id = checkOrgTokenIdParameter();
+
+
 
 if (org_id == null || org_token_id == null) { } else {
   async function initializeConfig(callback) {

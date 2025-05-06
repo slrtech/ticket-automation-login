@@ -175,6 +175,14 @@ h2 {
   margin: 1rem auto;
 }
 
+#login .spinner {
+  border: 4.40px solid #f3f3f3;  
+  border-top: 4.40px solid #339989;  
+  width: 18px;
+  height: 18px;
+  /* margin: 1rem auto; */
+}
+
 @keyframes spin {
   0% {
     transform: rotate(0deg);  /* Start angle */
@@ -536,7 +544,7 @@ body {
     color: #333333 !important;  /* Dark text for white background */
     font-size: 1.53em !important;  /* Increased from 1.47em */
     text-align: center !important;
-    white-space: nowrap !important; 
+    white-space: normal !important; 
 }
 
 .swal2-html-container {
@@ -577,4 +585,34 @@ body {
 .hidden-immediately {
     display: none !important;
     opacity: 0;
+}
+
+/* Alert popup styling */
+.alert-popup {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  padding: 16px 20px;
+  background-color: #1e2a32;
+  border: 1px solid rgba(255, 77, 79, 0.3);
+  border-radius: 8px;
+  color: #ff4d4f;
+  font-size: 0.825rem;
+  z-index: 2000;
+  max-width: 300px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateX(120%);
+  transition: transform 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.alert-popup.show {
+  transform: translateX(0);
+}
+
+.alert-popup::before {
+  content: '⚠️';
+  font-size: 14px;
 }

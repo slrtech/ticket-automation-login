@@ -31,8 +31,14 @@ function loginAndActivate(loading = true) {
         rolesList.innerHTML = `<div class="spinner"></div>`;
     }
 
-    const email    = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+
+    if (!email || !password) {
+        document.getElementById("loading").style.display = "none";
+        showPopup('Email e senha são obrigatórios.');
+        return;
+    }
 
     const headers = new Headers();
     headers.append("Content-Type", "application/json");
@@ -47,56 +53,56 @@ function loginAndActivate(loading = true) {
     });
 
     fetch(API_DB + "/getUser3", {
-        method:  "POST",
+        method: "POST",
         headers: headers,
-        body:    requestBody,
-        redirect:"follow"
+        body: requestBody,
+        redirect: "follow"
     })
-    .then(res => {
-        if (!res.ok) throw new Error(`HTTP status ${res.status}`);
-        return res.json();
-    })
-    .then(data => {
-        loggedInUser = data;
-        if (!data.user || !data.automations) {
-            throw new Error("Formato de resposta inesperado");
-        }
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP status ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            loggedInUser = data;
+            if (!data.user || !data.automations) {
+                throw new Error("Formato de resposta inesperado");
+            }
 
-        const userRoles   = data.user.roles;
-        const automations = data.automations.data[0].automations;
+            const userRoles = data.user.roles;
+            const automations = data.automations.data[0].automations;
 
-        // displayRoles vai limpar e preencher rolesList
-        displayRoles(userRoles, automations);
+            // displayRoles vai limpar e preencher rolesList
+            displayRoles(userRoles, automations);
 
-        // ajustes de UI pós-login
-        document.getElementById("login")             .style.display = "none";
-        document.getElementById("activationButtons") .style.display = "block";
-        document.getElementById("email")             .style.display = "none";
-        document.getElementById("password")          .style.display = "none";
-        document.querySelector('.login-wrapper')     .classList.add('logged-in');
-        document.getElementById('pageTitle')         .style.display = "none";
-        if (data.user.isAdmin) {
-            document.getElementById("adminDashboardButton").style.display = "block";
-        }
-    })
-    .catch(err => {
-        // em caso de erro, limpa o spinner
-        if (rolesList) {
-            rolesList.innerHTML = "";
-        }
-        console.error(err);
-        showAlert({
-            icon: "error",
-            title: "Erro...",
-            text:  "Senha incorreta ou erro no servidor."
+            // ajustes de UI pós-login
+            document.getElementById("login").style.display = "none";
+            document.getElementById("activationButtons").style.display = "block";
+            document.getElementById("email").style.display = "none";
+            document.getElementById("password").style.display = "none";
+            document.querySelector('.login-wrapper').classList.add('logged-in');
+            document.getElementById('pageTitle').style.display = "none";
+            if (data.user.isAdmin) {
+                document.getElementById("adminDashboardButton").style.display = "block";
+            }
+        })
+        .catch(err => {
+            // em caso de erro, limpa o spinner
+            if (rolesList) {
+                rolesList.innerHTML = "";
+            }
+            console.error(err);
+            showAlert({
+                icon: "error",
+                title: "Erro...",
+                text: "Senha incorreta ou erro no servidor."
+            });
+        })
+        .finally(() => {
+            // esconde loader geral, se houver
+            if (globalLoader) {
+                globalLoader.style.display = "none";
+            }
         });
-    })
-    .finally(() => {
-        // esconde loader geral, se houver
-        if (globalLoader) {
-            globalLoader.style.display = "none";
-        }
-    });
 }
 
 
@@ -423,9 +429,9 @@ function confirmActivation() {
                 document.getElementById("loading").style.display = "none";
                 if (data.error_code === "USER_MISSING_DEPARTMENT") {
                     showAlert({
-                        title: "Departamento não configurado",
+                        title: "<div style='text-align:center'>Departamento não configurado</div>",
                         text: data.status,
-                        icon: "warning"
+                        icon: "warning",
                     });
                 } else {
                     showAlert({
@@ -563,7 +569,32 @@ function showAlert(options) {
     });
 }
 
+function showPopup(message) {
+    // Remove any existing popup
+    const existingPopup = document.querySelector('.alert-popup');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+
+    // Create new popup
+    const popup = document.createElement('div');
+    popup.className = 'alert-popup';
+    popup.textContent = message;
+    document.body.appendChild(popup);
+
+    // Trigger animation
+    setTimeout(() => {
+        popup.classList.add('show');
+    }, 10);
+
+    // Remove popup after 5 seconds
+    setTimeout(() => {
+        popup.classList.remove('show');
+        setTimeout(() => {
+            popup.remove();
+        }, 300); // Wait for animation to complete
+    }, 5000);
+}
+
 const loadingElement = document.getElementById("loading");
 loadingElement.style.display = "none";
-const loadingElementWorkflows = document.getElementById("loading_workflows");
-loadingElementWorkflows.style.display = "none";
