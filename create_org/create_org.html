@@ -1,12 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Organization</title>
+  <link rel="stylesheet" href="create_org.css" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Nunito:wght@400;600&family=Quicksand:wght@400;600&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
 <body>
-  <form id="apiForm">
-    <label for="apiUrl">API URL:</label>
-    <input type="text" id="apiUrl" name="apiUrl" required />
+  <div id="loading" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Carregando...</p>
+  </div>
 
-    <label for="token">Token:</label>
-    <input type="text" id="token" name="token" required />
+  <div class="container">
+    <header>
+      <div class="logo">
+        <img src="eazoke.png" alt="Company Logo" />
+      </div>
+    </header>
 
-    <button type="button" onclick="handleSubmit()">Submit</button>
-  </form>
+    <main>
+      <h2>Configurar Nova Organização</h2>
+      <form id="apiForm" class="form">
+        <div class="form-group">
+          <div class="label-group">
+            <label for="apiUrl">URL da Plataforma</label>
+            <button type="button" class="info-button" data-info="url-info">i</button>
+          </div>
+          <input type="text" id="apiUrl" name="apiUrl" placeholder="Digite a URL da plataforma" required />
+        </div>
+
+        <div class="form-group">
+          <div class="label-group">
+            <label for="token">Token da Plataforma</label>
+            <button type="button" class="info-button" data-info="token-info">i</button>
+          </div>
+          <input type="text" id="token" name="token" placeholder="Digite o token da plataforma" required />
+        </div>
+
+        <button type="button" class="btn-primary" onclick="handleSubmit()">Salvar</button>
+      </form>
+    </main>
+  </div>
+
   <script src="create_org.js"></script>
 </body>
+
+</html>
